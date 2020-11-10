@@ -3,8 +3,8 @@ import pandas as pd
 from pytorch_lightning.loggers import TensorBoardLogger
 
 from ast import literal_eval
-from simpletransformers.classification import ClassificationArgs
-from simpletransformers.classification import ClassificationModel
+from simpletransformers.classification import MultiLabelClassificationArgs
+from simpletransformers.classification import MultiLabelClassificationModel
 
 from module.metrics import class_wise_f1_scores, class_wise_precision_scores, class_wise_recall_scores,\
                              f1_score, accuracy_score, precision_score, recall_score
@@ -14,6 +14,7 @@ from module.utils import TextProcessing
 
 text_processor = TextProcessing()
 
+log_file = "baseline_nepal_train_q_test"
 
 def process_text(df):
 
@@ -22,21 +23,22 @@ def process_text(df):
 
 def read_data():
 
-    train_df = pd.read_csv('nepal/train1.csv', index_col=0)
-    val_df = pd.read_csv('nepal/dev1.csv', index_col=0)
-    test_df = pd.read_csv('nepal/test1.csv', index_col=0)
-
-    train_df['text'] = process_text(train_df)
-    val_df['text'] = process_text(val_df)
-    test_df['text'] = process_text(test_df)
+    train_df = pd.read_csv('nepal/final_train2.csv', index_col=0)
+    val_df = pd.read_csv('nepal/final_val2.csv', index_col=0)
+    test_df = pd.read_csv('q/final_test2.csv', index_col=0)
 
     train_df['labels'] = list(map(lambda label_list: literal_eval(label_list), train_df['labels'].tolist()))
     val_df['labels'] = list(map(lambda label_list: literal_eval(label_list), val_df['labels'].tolist()))
     test_df['labels'] = list(map(lambda label_list: literal_eval(label_list), test_df['labels'].tolist()))
 
-    train_df.to_csv("nepal/final_train")
-    val_df.to_csv("nepal/final_val")
-    test_df.to_csv("nepal/final_test")
+    #train_df['text'] = process_text(train_df)
+    #val_df['text'] = process_text(val_df)
+    #test_df['text'] = process_text(test_df)
+
+
+    #train_df.to_csv("q/final_train2")
+    #val_df.to_csv("q/final_val2")
+    #test_df.to_csv("q/final_test2")
 
     return train_df, val_df, test_df
 
@@ -45,7 +47,7 @@ def read_data():
 
 train_df, val_df, test_df = read_data()
 
-label_id_to_label_text = {"not_relevant": 0, "relevant": 1}
+label_id_to_label_text = {0: "not_relevant", 1: "relevant"}
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Model initialization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -53,7 +55,7 @@ cuda_available = torch.cuda.is_available()
 n_gpu = torch.cuda.device_count()
 
 
-model_args = ClassificationArgs()
+model_args = MultiLabelClassificationArgs()
 
 # model_args.save_model_every_epoch = True
 # model_args.no_save = False
@@ -77,11 +79,14 @@ model_args.early_stopping_delta = 0
 model_args.train_batch_size = 60
 model_args.eval_batch_size = 30
 model_args.threshold = 0.5
-model_args.tensorboard_dir = "lightning_logs/baseline_nepal"
+model_args.tensorboard_dir = "lightning_logs/" + log_file
 model_args.manual_seed = 23
 
-model = ClassificationModel('roberta', 'roberta-base',
-                            use_cuda=cuda_available, args=model_args)
+
+model = MultiLabelClassificationModel('distilbert', 'distilbert-base-uncased-distilled-squad',
+                                              use_cuda=cuda_available, num_labels=2, args=model_args)
+
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Train your model ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -125,7 +130,7 @@ val_class_recall_scores_list = train_val_metrics['val_class_wise_recall_scores']
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Logger initialization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-logger = TensorBoardLogger("lightning_logs", name="baseline_nepal")
+logger = TensorBoardLogger("lightning_logs", name=log_file)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Log metrics ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
