@@ -14,40 +14,39 @@ from module.utils import TextProcessing
 
 text_processor = TextProcessing()
 
-log_file = "baseline_nepal_train_q_test"
+log_file = "baseline_smerp_train_smerp_test"
+
 
 def process_text(df):
-
     return list(map(lambda text: text_processor.process_text(text), df['text'].tolist()))
 
 
 def read_data():
 
-    train_df = pd.read_csv('nepal/final_train2.csv', index_col=0)
-    val_df = pd.read_csv('nepal/final_val2.csv', index_col=0)
-    test_df = pd.read_csv('q/final_test2.csv', index_col=0)
+    train_df = pd.read_csv('smerp/smerp_train.csv', index_col=0)
+    # val_df = pd.read_csv('smerp/smerp_val.csv', index_col=0)
+    test_df = pd.read_csv('smerp/smerp_test.csv', index_col=0)
 
     train_df['labels'] = list(map(lambda label_list: literal_eval(label_list), train_df['labels'].tolist()))
-    val_df['labels'] = list(map(lambda label_list: literal_eval(label_list), val_df['labels'].tolist()))
+    # val_df['labels'] = list(map(lambda label_list: literal_eval(label_list), val_df['labels'].tolist()))
     test_df['labels'] = list(map(lambda label_list: literal_eval(label_list), test_df['labels'].tolist()))
 
-    #train_df['text'] = process_text(train_df)
-    #val_df['text'] = process_text(val_df)
-    #test_df['text'] = process_text(test_df)
+    train_df['text'] = process_text(train_df)
+    # val_df['text'] = process_text(val_df)
+    test_df['text'] = process_text(test_df)
 
+    train_df.to_csv("smerp/train.csv")
+    # val_df.to_csv("q/final_val2")
+    test_df.to_csv("smerp/test.csv")
 
-    #train_df.to_csv("q/final_train2")
-    #val_df.to_csv("q/final_val2")
-    #test_df.to_csv("q/final_test2")
-
-    return train_df, val_df, test_df
+    return train_df, test_df
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Read data ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-train_df, val_df, test_df = read_data()
+train_df, test_df = read_data()
 
-label_id_to_label_text = {0: "not_relevant", 1: "relevant"}
+label_id_to_label_text = {0: "l0", 1: "l1", 2: "l2", 3: "l3"}
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Model initialization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -84,16 +83,12 @@ model_args.manual_seed = 23
 
 
 model = MultiLabelClassificationModel('distilbert', 'distilbert-base-uncased-distilled-squad',
-                                              use_cuda=cuda_available, num_labels=2, args=model_args)
-
+                                      use_cuda=cuda_available, num_labels=4, args=model_args)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Train your model ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-model.train_model(train_df, eval_df=val_df, output_dir="outputs", avg_val_accuracy_score=accuracy_score,
-                  avg_val_f1_score=f1_score, avg_val_precision_score=precision_score, avg_val_recall_score=recall_score,
-                  val_class_wise_f1_scores=class_wise_f1_scores, val_class_wise_precision_scores=class_wise_precision_scores,
-                  val_class_wise_recall_scores=class_wise_recall_scores)
+model.train_model(train_df, output_dir="outputs")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Evaluate your model ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -118,15 +113,15 @@ test_class_recall_scores_dict = {label_id_to_label_text[i]: test_class_recall_sc
 test_class_precision_scores_dict = {label_id_to_label_text[i]: test_class_precision_scores[i] for i in range(len(label_id_to_label_text))}
 
 avg_train_loss = train_val_metrics['train_loss'].tolist()
-avg_val_loss = train_val_metrics['eval_loss'].tolist()
-avg_val_f1_score = train_val_metrics['avg_val_f1_score'].tolist()
-avg_val_precision_score = train_val_metrics['avg_val_precision_score'].tolist()
-avg_val_recall_score = train_val_metrics['avg_val_recall_score'].tolist()
-avg_val_accuracy_score = train_val_metrics['avg_val_accuracy_score'].tolist()
+# avg_val_loss = train_val_metrics['eval_loss'].tolist()
+# avg_val_f1_score = train_val_metrics['avg_val_f1_score'].tolist()
+# avg_val_precision_score = train_val_metrics['avg_val_precision_score'].tolist()
+# avg_val_recall_score = train_val_metrics['avg_val_recall_score'].tolist()
+# avg_val_accuracy_score = train_val_metrics['avg_val_accuracy_score'].tolist()
 
-val_class_f1_scores_list = train_val_metrics['val_class_wise_f1_scores'].tolist()
-val_class_precision_scores_list = train_val_metrics['val_class_wise_precision_scores'].tolist()
-val_class_recall_scores_list = train_val_metrics['val_class_wise_recall_scores'].tolist()
+# val_class_f1_scores_list = train_val_metrics['val_class_wise_f1_scores'].tolist()
+# val_class_precision_scores_list = train_val_metrics['val_class_wise_precision_scores'].tolist()
+# val_class_recall_scores_list = train_val_metrics['val_class_wise_recall_scores'].tolist()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Logger initialization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -138,23 +133,23 @@ epochs = len(avg_train_loss)
 
 for epoch in range(epochs):
 
-    val_class_f1_scores = literal_eval(val_class_f1_scores_list[epoch])
-    val_class_precision_scores = literal_eval(val_class_precision_scores_list[epoch])
-    val_class_recall_scores = literal_eval(val_class_recall_scores_list[epoch])
+    # val_class_f1_scores = literal_eval(val_class_f1_scores_list[epoch])
+    # val_class_precision_scores = literal_eval(val_class_precision_scores_list[epoch])
+    # val_class_recall_scores = literal_eval(val_class_recall_scores_list[epoch])
 
-    val_class_f1_scores_dict = {label_id_to_label_text[i]: val_class_f1_scores[i] for i in range(len(label_id_to_label_text))}
-    val_class_recall_scores_dict = {label_id_to_label_text[i]: val_class_recall_scores[i] for i in range(len(label_id_to_label_text))}
-    val_class_precision_scores_dict = {label_id_to_label_text[i]: val_class_precision_scores[i] for i in range(len(label_id_to_label_text))}
+    # val_class_f1_scores_dict = {label_id_to_label_text[i]: val_class_f1_scores[i] for i in range(len(label_id_to_label_text))}
+    # val_class_recall_scores_dict = {label_id_to_label_text[i]: val_class_recall_scores[i] for i in range(len(label_id_to_label_text))}
+    # val_class_precision_scores_dict = {label_id_to_label_text[i]: val_class_precision_scores[i] for i in range(len(label_id_to_label_text))}
 
     logger.log_metrics(metrics={'avg_train_loss': avg_train_loss[epoch]}, step=epoch)
-    logger.log_metrics(metrics={'avg_val_loss': avg_val_loss[epoch]}, step=epoch)
-    logger.log_metrics(metrics={'avg_val_f1_score': avg_val_f1_score[epoch]}, step=epoch)
-    logger.log_metrics(metrics={'avg_val_precision_score': avg_val_precision_score[epoch]}, step=epoch)
-    logger.log_metrics(metrics={'avg_val_recall_score': avg_val_recall_score[epoch]}, step=epoch)
-    logger.log_metrics(metrics={'avg_val_accuracy_score': avg_val_accuracy_score[epoch]}, step=epoch)
-    logger.experiment.add_scalars('val_class_f1_scores', val_class_f1_scores_dict, global_step=epoch)
-    logger.experiment.add_scalars('val_class_recall_scores', val_class_recall_scores_dict, global_step=epoch)
-    logger.experiment.add_scalars('val_class_precision_scores', val_class_precision_scores_dict, global_step=epoch)
+    # logger.log_metrics(metrics={'avg_val_loss': avg_val_loss[epoch]}, step=epoch)
+    # logger.log_metrics(metrics={'avg_val_f1_score': avg_val_f1_score[epoch]}, step=epoch)
+    # logger.log_metrics(metrics={'avg_val_precision_score': avg_val_precision_score[epoch]}, step=epoch)
+    # logger.log_metrics(metrics={'avg_val_recall_score': avg_val_recall_score[epoch]}, step=epoch)
+    # logger.log_metrics(metrics={'avg_val_accuracy_score': avg_val_accuracy_score[epoch]}, step=epoch)
+    # logger.experiment.add_scalars('val_class_f1_scores', val_class_f1_scores_dict, global_step=epoch)
+    # logger.experiment.add_scalars('val_class_recall_scores', val_class_recall_scores_dict, global_step=epoch)
+    # logger.experiment.add_scalars('val_class_precision_scores', val_class_precision_scores_dict, global_step=epoch)
 
 logger.log_metrics(metrics={'avg_test_loss': result['eval_loss']}, step=0)
 logger.log_metrics(metrics={'avg_test_f1_score': avg_test_f1_score}, step=0)
