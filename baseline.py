@@ -1,50 +1,53 @@
 import torch
 import pandas as pd
-from pytorch_lightning.loggers import TensorBoardLogger
+# from pytorch_lightning.loggers import TensorBoardLogger
 
 from ast import literal_eval
 from simpletransformers.classification import MultiLabelClassificationArgs
 from simpletransformers.classification import MultiLabelClassificationModel
 
-from module.metrics import class_wise_f1_scores, class_wise_precision_scores, class_wise_recall_scores,\
-                             f1_score, accuracy_score, precision_score, recall_score
+# from module.metrics import class_wise_f1_scores, class_wise_precision_scores, class_wise_recall_scores,\
+#                              f1_score, accuracy_score, precision_score, recall_score
 
-from module.utils import TextProcessing
+# from module.utils import TextProcessing
 
 
-text_processor = TextProcessing()
+# text_processor = TextProcessing()
 
 log_file = "baseline_smerp_train_smerp_test"
 
 
-def process_text(df):
-    return list(map(lambda text: text_processor.process_text(text), df['text'].tolist()))
+# def process_text(df):
+#     return list(map(lambda text: text_processor.process_text(text), df['text'].tolist()))
 
 
 def read_data():
 
-    train_df = pd.read_csv('smerp/smerp_train.csv', index_col=0)
+    # train_df = pd.read_csv('smerp/smerp_train.csv', index_col=0)
     # val_df = pd.read_csv('smerp/smerp_val.csv', index_col=0)
-    test_df = pd.read_csv('smerp/smerp_test.csv', index_col=0)
+    test_df = pd.read_csv('smerp/test.csv', index_col=0)
 
-    train_df['labels'] = list(map(lambda label_list: literal_eval(label_list), train_df['labels'].tolist()))
+    # train_df['labels'] = list(map(lambda label_list: literal_eval(label_list), train_df['labels'].tolist()))
     # val_df['labels'] = list(map(lambda label_list: literal_eval(label_list), val_df['labels'].tolist()))
     test_df['labels'] = list(map(lambda label_list: literal_eval(label_list), test_df['labels'].tolist()))
 
-    train_df['text'] = process_text(train_df)
+    # train_df['text'] = process_text(train_df)
     # val_df['text'] = process_text(val_df)
-    test_df['text'] = process_text(test_df)
+    # test_df['text'] = process_text(test_df)
 
-    train_df.to_csv("smerp/train.csv")
+    # train_df.to_csv("smerp/train.csv")
     # val_df.to_csv("q/final_val2")
-    test_df.to_csv("smerp/test.csv")
+    # test_df.to_csv("smerp/test.csv")
 
-    return train_df, test_df
+    # return train_df, test_df
+    return test_df
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Read data ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-train_df, test_df = read_data()
+# train_df, test_df = read_data()
+
+test_df = read_data()
 
 label_id_to_label_text = {0: "l0", 1: "l1", 2: "l2", 3: "l3"}
 
@@ -82,37 +85,40 @@ model_args.tensorboard_dir = "lightning_logs/" + log_file
 model_args.manual_seed = 23
 
 
-model = MultiLabelClassificationModel('distilbert', 'distilbert-base-uncased-distilled-squad',
+model = MultiLabelClassificationModel('distilbert', 'models',
                                       use_cuda=cuda_available, num_labels=4, args=model_args)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Train your model ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-model.train_model(train_df, output_dir="outputs")
+# model.train_model(train_df, output_dir="outputs")
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Evaluate your model ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-result, model_outputs, wrong_predictions = model.eval_model(test_df, output_dir="outputs", f1_score=f1_score)
+# result, model_outputs, wrong_predictions = model.eval_model(test_df, output_dir="outputs", f1_score=f1_score)
+result, model_outputs, wrong_predictions = model.eval_model(test_df, output_dir="outputs")
+
+predictions, raw_outputs = model.predict(['This thing is entirely different from the other thing. '])
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Calculate metrics ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-labels = torch.Tensor(test_df['labels'].tolist())
-train_val_metrics = pd.read_csv('outputs/training_progress_scores.csv', index_col=0)
+# labels = torch.Tensor(test_df['labels'].tolist())
+# train_val_metrics = pd.read_csv('outputs/training_progress_scores.csv', index_col=0)
 
-avg_test_f1_score = f1_score(labels, model_outputs)
-avg_test_precision_score = precision_score(labels, model_outputs)
-avg_test_recall_score = recall_score(labels, model_outputs)
-avg_test_accuracy_score = accuracy_score(labels, model_outputs)
+# avg_test_f1_score = f1_score(labels, model_outputs)
+# avg_test_precision_score = precision_score(labels, model_outputs)
+# avg_test_recall_score = recall_score(labels, model_outputs)
+# avg_test_accuracy_score = accuracy_score(labels, model_outputs)
 
-test_class_f1_scores = class_wise_f1_scores(labels, model_outputs)
-test_class_precision_scores = class_wise_precision_scores(labels, model_outputs)
-test_class_recall_scores = class_wise_recall_scores(labels, model_outputs)
+# test_class_f1_scores = class_wise_f1_scores(labels, model_outputs)
+# test_class_precision_scores = class_wise_precision_scores(labels, model_outputs)
+# test_class_recall_scores = class_wise_recall_scores(labels, model_outputs)
 
-test_class_f1_scores_dict = {label_id_to_label_text[i]: test_class_f1_scores[i] for i in range(len(label_id_to_label_text))}
-test_class_recall_scores_dict = {label_id_to_label_text[i]: test_class_recall_scores[i] for i in range(len(label_id_to_label_text))}
-test_class_precision_scores_dict = {label_id_to_label_text[i]: test_class_precision_scores[i] for i in range(len(label_id_to_label_text))}
+# test_class_f1_scores_dict = {label_id_to_label_text[i]: test_class_f1_scores[i] for i in range(len(label_id_to_label_text))}
+# test_class_recall_scores_dict = {label_id_to_label_text[i]: test_class_recall_scores[i] for i in range(len(label_id_to_label_text))}
+# test_class_precision_scores_dict = {label_id_to_label_text[i]: test_class_precision_scores[i] for i in range(len(label_id_to_label_text))}
 
-avg_train_loss = train_val_metrics['train_loss'].tolist()
+# avg_train_loss = train_val_metrics['train_loss'].tolist()
 # avg_val_loss = train_val_metrics['eval_loss'].tolist()
 # avg_val_f1_score = train_val_metrics['avg_val_f1_score'].tolist()
 # avg_val_precision_score = train_val_metrics['avg_val_precision_score'].tolist()
@@ -125,41 +131,39 @@ avg_train_loss = train_val_metrics['train_loss'].tolist()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Logger initialization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-logger = TensorBoardLogger("lightning_logs", name=log_file)
+# logger = TensorBoardLogger("lightning_logs", name=log_file)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Log metrics ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-epochs = len(avg_train_loss)
+# epochs = len(avg_train_loss)
 
-for epoch in range(epochs):
+# for epoch in range(epochs):
 
-    # val_class_f1_scores = literal_eval(val_class_f1_scores_list[epoch])
-    # val_class_precision_scores = literal_eval(val_class_precision_scores_list[epoch])
-    # val_class_recall_scores = literal_eval(val_class_recall_scores_list[epoch])
+#     # val_class_f1_scores = literal_eval(val_class_f1_scores_list[epoch])
+#     # val_class_precision_scores = literal_eval(val_class_precision_scores_list[epoch])
+#     # val_class_recall_scores = literal_eval(val_class_recall_scores_list[epoch])
 
-    # val_class_f1_scores_dict = {label_id_to_label_text[i]: val_class_f1_scores[i] for i in range(len(label_id_to_label_text))}
-    # val_class_recall_scores_dict = {label_id_to_label_text[i]: val_class_recall_scores[i] for i in range(len(label_id_to_label_text))}
-    # val_class_precision_scores_dict = {label_id_to_label_text[i]: val_class_precision_scores[i] for i in range(len(label_id_to_label_text))}
+#     # val_class_f1_scores_dict = {label_id_to_label_text[i]: val_class_f1_scores[i] for i in range(len(label_id_to_label_text))}
+#     # val_class_recall_scores_dict = {label_id_to_label_text[i]: val_class_recall_scores[i] for i in range(len(label_id_to_label_text))}
+#     # val_class_precision_scores_dict = {label_id_to_label_text[i]: val_class_precision_scores[i] for i in range(len(label_id_to_label_text))}
 
-    logger.log_metrics(metrics={'avg_train_loss': avg_train_loss[epoch]}, step=epoch)
-    # logger.log_metrics(metrics={'avg_val_loss': avg_val_loss[epoch]}, step=epoch)
-    # logger.log_metrics(metrics={'avg_val_f1_score': avg_val_f1_score[epoch]}, step=epoch)
-    # logger.log_metrics(metrics={'avg_val_precision_score': avg_val_precision_score[epoch]}, step=epoch)
-    # logger.log_metrics(metrics={'avg_val_recall_score': avg_val_recall_score[epoch]}, step=epoch)
-    # logger.log_metrics(metrics={'avg_val_accuracy_score': avg_val_accuracy_score[epoch]}, step=epoch)
-    # logger.experiment.add_scalars('val_class_f1_scores', val_class_f1_scores_dict, global_step=epoch)
-    # logger.experiment.add_scalars('val_class_recall_scores', val_class_recall_scores_dict, global_step=epoch)
-    # logger.experiment.add_scalars('val_class_precision_scores', val_class_precision_scores_dict, global_step=epoch)
+#     logger.log_metrics(metrics={'avg_train_loss': avg_train_loss[epoch]}, step=epoch)
+#     # logger.log_metrics(metrics={'avg_val_loss': avg_val_loss[epoch]}, step=epoch)
+#     # logger.log_metrics(metrics={'avg_val_f1_score': avg_val_f1_score[epoch]}, step=epoch)
+#     # logger.log_metrics(metrics={'avg_val_precision_score': avg_val_precision_score[epoch]}, step=epoch)
+#     # logger.log_metrics(metrics={'avg_val_recall_score': avg_val_recall_score[epoch]}, step=epoch)
+#     # logger.log_metrics(metrics={'avg_val_accuracy_score': avg_val_accuracy_score[epoch]}, step=epoch)
+#     # logger.experiment.add_scalars('val_class_f1_scores', val_class_f1_scores_dict, global_step=epoch)
+#     # logger.experiment.add_scalars('val_class_recall_scores', val_class_recall_scores_dict, global_step=epoch)
+#     # logger.experiment.add_scalars('val_class_precision_scores', val_class_precision_scores_dict, global_step=epoch)
 
-logger.log_metrics(metrics={'avg_test_loss': result['eval_loss']}, step=0)
-logger.log_metrics(metrics={'avg_test_f1_score': avg_test_f1_score}, step=0)
-logger.log_metrics(metrics={'avg_test_precision_score': avg_test_precision_score}, step=0)
-logger.log_metrics(metrics={'avg_test_recall_score': avg_test_recall_score}, step=0)
-logger.log_metrics(metrics={'avg_test_accuracy_score': avg_test_accuracy_score}, step=0)
-logger.experiment.add_scalars('test_class_f1_scores', test_class_f1_scores_dict, global_step=0)
-logger.experiment.add_scalars('test_class_recall_scores', test_class_recall_scores_dict, global_step=0)
-logger.experiment.add_scalars('test_class_precision_scores', test_class_precision_scores_dict, global_step=0)
+# logger.log_metrics(metrics={'avg_test_loss': result['eval_loss']}, step=0)
+# logger.log_metrics(metrics={'avg_test_f1_score': avg_test_f1_score}, step=0)
+# logger.log_metrics(metrics={'avg_test_precision_score': avg_test_precision_score}, step=0)
+# logger.log_metrics(metrics={'avg_test_recall_score': avg_test_recall_score}, step=0)
+# logger.log_metrics(metrics={'avg_test_accuracy_score': avg_test_accuracy_score}, step=0)
+# logger.experiment.add_scalars('test_class_f1_scores', test_class_f1_scores_dict, global_step=0)
+# logger.experiment.add_scalars('test_class_recall_scores', test_class_recall_scores_dict, global_step=0)
+# logger.experiment.add_scalars('test_class_precision_scores', test_class_precision_scores_dict, global_step=0)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Use your model ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# predictions, raw_outputs = model.predict(['This thing is entirely different from the other thing. '])
