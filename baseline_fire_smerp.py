@@ -11,30 +11,30 @@ from module.metrics import class_wise_f1_scores, class_wise_precision_scores, cl
 
 import time
 
-log_file = "BERT_NEQ_train_NEQ_test"
+log_file = "BERT_SMERP17_train_SMERP17_test"
 
 
 def read_data():
 
-    train_df = pd.read_csv('nepal/train.csv', index_col=0)
-    val_df = pd.read_csv('nepal/val.csv', index_col=0)
-    test_df = pd.read_csv('nepal/test.csv', index_col=0)
+    train_df = pd.read_csv('smerp/train.csv', index_col=0)
+    # val_df = pd.read_csv('smerp/smerp_val.csv', index_col=0)
+    test_df = pd.read_csv('smerp/test.csv', index_col=0)
 
     train_df['labels'] = list(map(lambda label_list: literal_eval(label_list), train_df['labels'].tolist()))
-    val_df['labels'] = list(map(lambda label_list: literal_eval(label_list), val_df['labels'].tolist()))
+    # val_df['labels'] = list(map(lambda label_list: literal_eval(label_list), val_df['labels'].tolist()))
     test_df['labels'] = list(map(lambda label_list: literal_eval(label_list), test_df['labels'].tolist()))
 
-    return train_df, val_df, test_df
+    return train_df, test_df
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Read data ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#train_df, test_df = read_data()
+train_df, test_df = read_data()
 
-train_df, val_df, test_df = read_data()
+#train_df, val_df, test_df = read_data()
 
-label_id_to_label_text = {0: "not_relevant", 1: "relevant"}
-#label_id_to_label_text = {0: "l0", 1: "l1", 2: "l2", 3: "l3"}
+# label_id_to_label_text = {0: "not_relevant", 1: "relevant"}
+label_id_to_label_text = {0: "l0", 1: "l1", 2: "l2", 3: "l3"}
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Model initialization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -53,8 +53,8 @@ model_args.save_eval_checkpoints = False
 model_args.save_optimizer_and_scheduler = False
 model_args.reprocess_input_data = True
 model_args.overwrite_output_dir = True
-model_args.num_train_epochs = 10
-model_args.evaluate_during_training = True
+model_args.num_train_epochs = 40
+model_args.evaluate_during_training = False
 model_args.evaluate_during_training_verbose = True
 model_args.evaluate_each_epoch = True
 model_args.use_early_stopping = True
@@ -70,17 +70,17 @@ model_args.tensorboard_dir = "lightning_logs/" + log_file
 model_args.manual_seed = 23
 
 model = MultiLabelClassificationModel('bert', 'bert-base-uncased',
-                                      use_cuda=cuda_available, num_labels=2, args=model_args)
+                                      use_cuda=cuda_available, num_labels=4, args=model_args)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Train your model ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 train_time = time.time()
-model.train_model(train_df, eval_df=val_df, output_dir="outputs", avg_val_accuracy_score=accuracy_score,
-                   avg_val_f1_score=f1_score, avg_val_precision_score=precision_score, avg_val_recall_score=recall_score,
-                   val_class_wise_f1_scores=class_wise_f1_scores, val_class_wise_precision_scores=class_wise_precision_scores,
-                   val_class_wise_recall_scores=class_wise_recall_scores)
-#model.train_model(train_df, output_dir="outputs")
+# model.train_model(train_df, eval_df=val_df, output_dir="outputs", avg_val_accuracy_score=accuracy_score,
+#                   avg_val_f1_score=f1_score, avg_val_precision_score=precision_score, avg_val_recall_score=recall_score,
+#                   val_class_wise_f1_scores=class_wise_f1_scores, val_class_wise_precision_scores=class_wise_precision_scores,
+#                   val_class_wise_recall_scores=class_wise_recall_scores)
+model.train_model(train_df, output_dir="outputs")
 train_end_time = time.time()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Evaluate your model ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -115,10 +115,10 @@ test_class_precision_scores_dict = {label_id_to_label_text[i]: test_class_precis
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Log metrics ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-train_val_metrics = pd.read_csv('outputs/training_progress_scores.csv', index_col=0)
-avg_train_loss = train_val_metrics['train_loss'].tolist()
-epochs = len(avg_train_loss)
-#epochs = 40
+# train_val_metrics = pd.read_csv('outputs/training_progress_scores.csv', index_col=0)
+# avg_train_loss = train_val_metrics['train_loss'].tolist()
+# epochs = len(avg_train_loss)
+epochs = 40
 
 rd = {}
 
