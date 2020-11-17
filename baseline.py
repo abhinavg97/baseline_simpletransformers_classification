@@ -11,14 +11,22 @@ from module.metrics import class_wise_f1_scores, class_wise_precision_scores, cl
 
 import time
 
-log_file = "BERT_NEQ_train_NEQ_test"
+log_file = "BERT_SMERP17_train_FIRE16_test"
+
+dataset_train = 'smerp'
+dataset_test = 'fire'
+
+
+def count_parameters(model):
+    param_count = sum(v.numel() for k, v in model.items())
+    return param_count
 
 
 def read_data():
 
-    train_df = pd.read_csv('nepal/train.csv', index_col=0)
-    val_df = pd.read_csv('nepal/val.csv', index_col=0)
-    test_df = pd.read_csv('nepal/test.csv', index_col=0)
+    train_df = pd.read_csv(f'{dataset_train}/train.csv', index_col=0)
+    val_df = pd.read_csv(f'{dataset_train}/val.csv', index_col=0)
+    test_df = pd.read_csv(f'{dataset_test}/test.csv', index_col=0)
 
     train_df['labels'] = list(map(lambda label_list: literal_eval(label_list), train_df['labels'].tolist()))
     val_df['labels'] = list(map(lambda label_list: literal_eval(label_list), val_df['labels'].tolist()))
@@ -29,18 +37,15 @@ def read_data():
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Read data ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-#train_df, test_df = read_data()
-
 train_df, val_df, test_df = read_data()
 
-label_id_to_label_text = {0: "not_relevant", 1: "relevant"}
-#label_id_to_label_text = {0: "l0", 1: "l1", 2: "l2", 3: "l3"}
+label_id_to_label_text = {0: "L1", 1: "L2", 3: "L3", 4: "L4"}
+# label_id_to_label_text = {0: "not_relevant", 1: "relevant"}
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Model initialization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 cuda_available = torch.cuda.is_available()
 n_gpu = torch.cuda.device_count()
-
 
 model_args = MultiLabelClassificationArgs()
 
@@ -70,24 +75,23 @@ model_args.tensorboard_dir = "lightning_logs/" + log_file
 model_args.manual_seed = 23
 
 model = MultiLabelClassificationModel('bert', 'bert-base-uncased',
-                                      use_cuda=cuda_available, num_labels=2, args=model_args)
+                                      use_cuda=cuda_available, num_labels=4, args=model_args)
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Train your model ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 train_time = time.time()
 model.train_model(train_df, eval_df=val_df, output_dir="outputs", avg_val_accuracy_score=accuracy_score,
-                   avg_val_f1_score=f1_score, avg_val_precision_score=precision_score, avg_val_recall_score=recall_score,
-                   val_class_wise_f1_scores=class_wise_f1_scores, val_class_wise_precision_scores=class_wise_precision_scores,
-                   val_class_wise_recall_scores=class_wise_recall_scores)
-#model.train_model(train_df, output_dir="outputs")
+                  avg_val_f1_score=f1_score, avg_val_precision_score=precision_score, avg_val_recall_score=recall_score,
+                  val_class_wise_f1_scores=class_wise_f1_scores, val_class_wise_precision_scores=class_wise_precision_scores,
+                  val_class_wise_recall_scores=class_wise_recall_scores)
+
 train_end_time = time.time()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Evaluate your model ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 test_time = time.time()
 result, model_outputs, wrong_predictions = model.eval_model(test_df, output_dir="outputs", f1_score=f1_score)
-# result, model_outputs, wrong_predictions = model.eval_model(test_df, output_dir="outputs")
 test_end_time = time.time()
 
 # preds, model_outputs, all_embedding_outputs, all_layer_hidden_states = model.predict(['This thing is entirely different from the other thing. '])
@@ -118,7 +122,6 @@ test_class_precision_scores_dict = {label_id_to_label_text[i]: test_class_precis
 train_val_metrics = pd.read_csv('outputs/training_progress_scores.csv', index_col=0)
 avg_train_loss = train_val_metrics['train_loss'].tolist()
 epochs = len(avg_train_loss)
-#epochs = 40
 
 rd = {}
 
@@ -133,6 +136,9 @@ rd['test_time'] = (test_end_time - test_time) / (1.0*len(labels))
 
 rd['train_epochs'] = epochs
 
+model = torch.load('outputs/pytorch_model.bin', map_location=torch.device('cpu'))
+
+rd['params'] = count_parameters(model)
 
 with open(log_file+'.json', 'w') as f:
     json.dump(rd, f)
