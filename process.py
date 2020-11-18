@@ -1,15 +1,17 @@
 import pandas as pd
 
-d = pd.read_csv('oklahoma/val.csv', sep=',', index_col=0)
+set1 = 'train'
+
+d = pd.read_csv(f'neq/{set1}.tsv', sep='	', index_col=0)
 
 labels = d['labels'].tolist()
 
-labels = list(map(lambda x: 1 if x == '[0, 1]' else 0, labels))
+labels = list(map(lambda x: [0, 1] if x == 'relevant' else [1, 0], labels))
 
 d['labels'] = labels
 
 
-d.to_csv('oklahoma/OT13_val.csv', index_label='tweet_id')
+d.to_csv(f'neq/{set1}.csv', index_label='tweet_id')
 
 # d = pd.read_csv('fire/fire16_test.csv', index_col=0)
 

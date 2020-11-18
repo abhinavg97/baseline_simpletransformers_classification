@@ -39,8 +39,8 @@ def read_data():
 
 train_df, val_df, test_df = read_data()
 
-label_id_to_label_text = {0: "L0", 1: "L1", 2: "L2", 3: "L3"}
-#label_id_to_label_text = {0: "not_relevant", 1: "relevant"}
+# label_id_to_label_text = {0: "L0", 1: "L1", 2: "L2", 3: "L3"}
+label_id_to_label_text = {0: "not_relevant", 1: "relevant"}
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Model initialization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
