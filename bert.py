@@ -11,10 +11,10 @@ from module.metrics import class_wise_f1_scores, class_wise_precision_scores, cl
 
 import time
 
-log_file = "BERT_SMERP17_train_FIRE16_test"
+log_file = "BERT_SMERP17_train_SMERP17_test"
 
 dataset_train = 'smerp'
-dataset_test = 'fire'
+dataset_test = 'smerp'
 
 
 def count_parameters(model):
@@ -39,8 +39,8 @@ def read_data():
 
 train_df, val_df, test_df = read_data()
 
-label_id_to_label_text = {0: "L1", 1: "L2", 3: "L3", 4: "L4"}
-# label_id_to_label_text = {0: "not_relevant", 1: "relevant"}
+label_id_to_label_text = {0: "L0", 1: "L1", 2: "L2", 3: "L3"}
+#label_id_to_label_text = {0: "not_relevant", 1: "relevant"}
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Model initialization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -58,7 +58,7 @@ model_args.save_eval_checkpoints = False
 model_args.save_optimizer_and_scheduler = False
 model_args.reprocess_input_data = True
 model_args.overwrite_output_dir = True
-model_args.num_train_epochs = 10
+model_args.num_train_epochs = 40
 model_args.evaluate_during_training = True
 model_args.evaluate_during_training_verbose = True
 model_args.evaluate_each_epoch = True
