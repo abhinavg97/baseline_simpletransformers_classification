@@ -11,10 +11,10 @@ from module.metrics import class_wise_f1_scores, class_wise_precision_scores, cl
 
 import time
 
-log_file = "BERT_SMERP17_train_SMERP17_test"
+log_file = "BERT_SMERP17_train_FIRE16_test"
 
 dataset_train = 'smerp'
-dataset_test = 'smerp'
+dataset_test = 'fire'
 
 
 def count_parameters(model):
@@ -24,9 +24,9 @@ def count_parameters(model):
 
 def read_data():
 
-    train_df = pd.read_csv(f'{dataset_train}/train.csv', index_col=0)
-    val_df = pd.read_csv(f'{dataset_train}/val.csv', index_col=0)
-    test_df = pd.read_csv(f'{dataset_test}/test.csv', index_col=0)
+    train_df = pd.read_csv(f'{dataset_train}/train_1.csv', index_col=0)
+    val_df = pd.read_csv(f'{dataset_train}/val_1.csv', index_col=0)
+    test_df = pd.read_csv(f'{dataset_test}/test_1.csv', index_col=0)
 
     train_df['labels'] = list(map(lambda label_list: literal_eval(label_list), train_df['labels'].tolist()))
     val_df['labels'] = list(map(lambda label_list: literal_eval(label_list), val_df['labels'].tolist()))
@@ -39,8 +39,8 @@ def read_data():
 
 train_df, val_df, test_df = read_data()
 
-# label_id_to_label_text = {0: "L0", 1: "L1", 2: "L2", 3: "L3"}
-label_id_to_label_text = {0: "not_relevant", 1: "relevant"}
+label_id_to_label_text = {0: "L0", 1: "L1", 2: "L2", 3: "L3"}
+# label_id_to_label_text = {0: "not_relevant", 1: "relevant"}
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Model initialization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -92,7 +92,19 @@ train_end_time = time.time()
 
 test_time = time.time()
 result, model_outputs, wrong_predictions = model.eval_model(test_df, output_dir="outputs", f1_score=f1_score)
+# result, model_outputs, wrong_predictions = model.eval_model(test_df, output_dir="outputs")
 test_end_time = time.time()
+
+
+mistakes_dataframe = pd.DataFrame()
+
+mistakes_dataframe['text'] = list(map(lambda sentence: sentence.text_a, wrong_predictions))
+mistakes_dataframe['labels'] = list(map(lambda sentence: sentence.label, wrong_predictions))
+
+
+mistakes_dataframe['preds'] = list(map(lambda sentence: model.predict([sentence.text_a])[0][0], wrong_predictions))
+
+mistakes_dataframe.to_csv(f'misclassifications_{log_file}.csv')
 
 # preds, model_outputs, all_embedding_outputs, all_layer_hidden_states = model.predict(['This thing is entirely different from the other thing. '])
 
