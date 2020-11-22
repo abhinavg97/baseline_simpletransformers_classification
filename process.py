@@ -13,24 +13,25 @@ import pandas as pd
 
 # d.to_csv(f'neq/{set1}.csv', index_label='tweet_id')
 
-d = pd.read_csv('fire/fire16_test.csv', index_col=0)
+# d = pd.read_csv('fire/fire16_test.csv', index_col=0)
 
-l0 = d['0'].tolist()
-l1 = d['1'].tolist()
-l2 = d['2'].tolist()
-l3 = d['3'].tolist()
+# l0 = d['0'].tolist()
+# l1 = d['1'].tolist()
+# l2 = d['2'].tolist()
+# l3 = d['3'].tolist()
 
-d.drop(['0', '1', '2', '3'], axis=1, inplace=True)
+# d.drop(['0', '1', '2', '3'], axis=1, inplace=True)
 
-d['labels'] = list(map(lambda x1, x2, x3, x4: [x1, x2, x3, x4], l0, l1, l2, l3))
+# d['labels'] = list(map(lambda x1, x2, x3, x4: [x1, x2, x3, x4], l0, l1, l2, l3))
 
-d.to_csv('fire/3.csv', index_label='tweet_id')
+# d.to_csv('fire/3.csv', index_label='tweet_id')
 
-# df = pd.read_csv('sandy/full.csv', sep=',', index_col=0)
-# train_val = df.sample(frac=0.7, random_state=23)
-# test = df.drop(train_val.index)
+frac = 0.75
+df = pd.read_csv('smerp/train.csv', sep=',', index_col=0)
+train = df.sample(frac=frac, random_state=23)
+train = df.drop(train.index)
 
-
+train.to_csv(f'smerp/train_{frac}.csv', index_label='tweet_id')
 # train = train_val.sample(frac=(6/7.0), random_state=23)
 
 # val = train_val.drop(train.index)

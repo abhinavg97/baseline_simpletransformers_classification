@@ -7,7 +7,8 @@ from simpletransformers.classification import MultiLabelClassificationArgs
 from simpletransformers.classification import MultiLabelClassificationModel
 
 from module.metrics import class_wise_f1_scores, class_wise_precision_scores, class_wise_recall_scores,\
-                             f1_score, accuracy_score, precision_score, recall_score, micro_f1_score, micro_precision_score, micro_recall_score
+                             f1_score, accuracy_score, precision_score, recall_score, micro_f1_score, micro_precision_score, micro_recall_score,\
+                             weighted_precision_score, weighted_f1_score, weighted_recall_score
 
 import time
 
@@ -24,9 +25,9 @@ def count_parameters(model):
 
 def read_data():
 
-    train_df = pd.read_csv(f'{dataset_train}/train_1.csv', index_col=0)
-    val_df = pd.read_csv(f'{dataset_train}/val_1.csv', index_col=0)
-    test_df = pd.read_csv(f'{dataset_test}/test_1.csv', index_col=0)
+    train_df = pd.read_csv(f'{dataset_train}/train.csv', index_col=0)
+    val_df = pd.read_csv(f'{dataset_train}/val.csv', index_col=0)
+    test_df = pd.read_csv(f'{dataset_test}/test.csv', index_col=0)
 
     train_df['labels'] = list(map(lambda label_list: literal_eval(label_list), train_df['labels'].tolist()))
     val_df['labels'] = list(map(lambda label_list: literal_eval(label_list), val_df['labels'].tolist()))
@@ -112,6 +113,10 @@ mistakes_dataframe.to_csv(f'misclassifications_{log_file}.csv')
 
 labels = torch.Tensor(test_df['labels'].tolist())
 
+wgt_f1_score = weighted_f1_score(labels, model_outputs)
+wgt_precision_score = weighted_precision_score(labels, model_outputs)
+wgt_recall_score = weighted_recall_score(labels, model_outputs)
+
 avg_micro_f1_score = micro_f1_score(labels, model_outputs)
 avg_micro_precision_score = micro_precision_score(labels, model_outputs)
 avg_micro_recall_score = micro_recall_score(labels, model_outputs)
@@ -139,9 +144,9 @@ rd = {}
 
 rd['accuracy'] = {'unnormalize': avg_test_accuracy_score}
 
-rd['f1'] = {'macro': avg_test_f1_score, 'micro': avg_micro_f1_score, 'classes': test_class_f1_scores}
-rd['recall'] = {'macro': avg_test_recall_score, 'micro': avg_micro_recall_score, 'classes': test_class_recall_scores}
-rd['precision'] = {'macro': avg_test_precision_score, 'micro': avg_micro_precision_score, 'classes': test_class_precision_scores}
+rd['f1'] = {'macro': avg_test_f1_score, 'micro': avg_micro_f1_score, 'weighted': wgt_f1_score, 'classes': test_class_f1_scores}
+rd['recall'] = {'macro': avg_test_recall_score, 'micro': avg_micro_recall_score, 'weighted': wgt_recall_score, 'classes': test_class_recall_scores}
+rd['precision'] = {'macro': avg_test_precision_score, 'micro': avg_micro_precision_score, 'weighted': wgt_precision_score, 'classes': test_class_precision_scores}
 
 rd['train_time'] = train_end_time - train_time
 rd['test_time'] = (test_end_time - test_time) / (1.0*len(labels))

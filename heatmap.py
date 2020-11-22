@@ -4,7 +4,7 @@ import torch
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
+
 
 def plot_heatmap(data, vmin=-1., vmax=1., save_name='heatmap.pdf'):
     """ Plots a heatmap.
@@ -20,6 +20,7 @@ def plot_heatmap(data, vmin=-1., vmax=1., save_name='heatmap.pdf'):
 
     sns.color_palette("viridis", as_cmap=True)
     ax = sns.heatmap(data, vmin=vmin, vmax=vmax, annot=False, fmt="f", linewidths=.5, cbar=True, cmap='viridis_r')
+    ax
     plt.savefig(save_name)
 
 
@@ -65,15 +66,15 @@ glove_normed = (glove_sim - glove_sim.mean(axis=0)) / glove_sim.std(axis=0)
 torch.save(torch.Tensor(gcn_sim), 'gcn_cosine_sim.pt')
 torch.save(torch.Tensor(glove_sim), 'glove_cosine_sim.pt')
 
-print(glove_normed)
+print(gcn_normed)
 
 
 index = sorted(words)
 columns = sorted(words)
 
-# data = pd.DataFrame(gcn_normed, index=index, columns=columns)
-# plot_heatmap(data=data, save_name='gcn_heatmap.pdf')
+data = pd.DataFrame(gcn_normed, index=index, columns=columns)
+plot_heatmap(data=data, save_name='gcn_heatmap.pdf')
 
 
-data1 = pd.DataFrame(glove_normed, index=index, columns=columns)
-plot_heatmap(data=data1, save_name='glove_heatmap.pdf')
+# data1 = pd.DataFrame(glove_normed, index=index, columns=columns)
+# plot_heatmap(data=data1, save_name='glove_heatmap.pdf')
